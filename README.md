@@ -61,6 +61,10 @@ Revision/Addition Description and Link:
 # Lawrence Y.
 
 * Initial Description and Link:
+* Demonstrated rename, filter, and subset on steak dataframe with dplyr.
+* Demonstrated fc_lump_lowfreq to combine low frequency education types with forcats.
+* Demonstrated geom_bar bar plots to display data with ggplot2.
+* [https://github.com/Megabuster/Data607/blob/main/data/tidyverse/tidyverse_create.Rmd](https://github.com/Megabuster/Data607/blob/main/data/tidyverse/tidyverse_create.Rmd)
 
 * Revision/Addition Description and Link:
 
