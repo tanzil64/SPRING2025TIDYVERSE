@@ -1,0 +1,127 @@
+---
+title: "Student_depression_vignettes"
+author: "W.Durosier"
+date: "2025-04-09"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Get Started
+
+## Introduction
+
+For this Vignette, we will be exploring mental health trends among students using th Student Depresion Dataset by April Shamim(Kaggle). The goal is to show how Dplyr and GGplot2-two core components of the TidyVerese- can be utilized to analyze the risk factors accompanied with depression.
+Futhermore, will inform and persuade, hilighting ative insight into student well-being and display how TidyVerse tools support transparent, reproducible data anakysis.
+
+## Load Packages
+
+```{r} 
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+
+```
+
+
+## Load Data
+
+```{r}
+
+student_data <- c("C:/Users/wdque/Downloads/student_depression_dataset.csv")
+
+student_data <- read.csv("C:/Users/wdque/Downloads/student_depression_dataset.csv")
+```
+
+## Exploring data
+
+```{r}
+glimpse(student_data)
+
+head(student_data)
+```
+## CleaN and Transform dataset
+ Here the data 'Depression column will be inspected while targeting variables , and prepare categorical variables for analysis.
+ 
+ 
+
+```{r}
+str(student_data)
+```
+
+## Preparing Data
+```{r}
+# Convert Depression to a factor if it's not already
+student_data <- student_data %>%
+  mutate(
+    Depression = case_when(
+      Depression == 1 ~ "Yes",
+      Depression == 0 ~ "No",
+      TRUE ~ NA_character_
+    ),
+    Depression = factor(Depression, levels = c("No", "Yes"))
+  )
+
+# Check the transformation
+table(student_data$Depression, useNA = "ifany")
+
+```
+##Analysis Visualization using ggplot2
+
+```{r}
+student_data %>%
+  ggplot(aes(x = Gender)) +
+  geom_bar(fill = "magenta") +
+  labs(title = "Gender Distribution", x = "Gender", y = "Count") +
+  theme_minimal()
+
+
+```
+## explore Depression by Gender
+
+```{r}
+student_data %>%
+  filter(!is.na(Depression)) %>%
+  ggplot(aes(x = Gender, fill = Depression)) +
+  geom_bar(position = "fill") +
+  labs(title = "Proportion of Depression by Gender",
+       y = "Proportion", x = "Gender") +
+  scale_fill_manual(values = c("No" = "lightgreen", "Yes" = "tomato")) +
+  theme_minimal()
+
+```
+
+# Visual Academic Pressure and Depression
+
+```{r}
+student_data %>%
+  filter(!is.na(Depression)) %>%
+  ggplot(aes(x = Depression, y = Academic.Pressure, fill = Depression)) +
+  geom_boxplot() +
+  labs(title = "Academic Pressure and Depression",
+       x = "Depression Status", y = "Academic Pressure") +
+  theme_minimal()
+
+```
+
+## Conclusion
+This vignette demonstrated how the Tidyverse makes it possible to analyze mental health data in a neat, sophisticated, and repeatable manner. We noticed:
+
+a glaring disparity in the prevalence of depression by gender.
+
+There is typically a correlation between reported depression and increased academic pressure.
+
+These results can assist educators and policymakers in identifying populations that are at risk and in promoting the well-being of students.
+
+***
+
+
+
+
+
+
