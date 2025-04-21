@@ -1,0 +1,129 @@
+---
+title: "Tidyverse Create"
+author: "Lawrence Yu"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+
+```
+
+### Sample Vignette
+
+This is an example of how to use tidyverse packages such as dplyr, forcats, and ggplot2. Our goal is to answer the question: does education level impact a person's steak preference?  
+
+Start by loading the data. The resulting dataframe will require a bit of tidying before it can be used. The data is from a steak survey at https://github.com/fivethirtyeight/data/tree/master/steak-survey. 
+
+```{r}
+steak_url <- 'https://raw.githubusercontent.com/Megabuster/Data607/refs/heads/main/data/tidyverse/steak-risk-survey.csv'
+raw_steak <- read.csv(steak_url, header = TRUE, sep = ',')
+```
+
+### Using Dplyr
+
+Using `rename` from dplyr in tidyverse, we can rename the otherwise long and unwieldy column names. `Filter`, also from dplyr, for respondents that say they eat steak because we are looking for their opinions. `Subset` from dplyr allows us to then remove the eat_steak column as it no longer provides meaningful information.
+
+```{r}
+steak_df <- raw_steak %>% 
+  rename(
+    respondent_id = 1,
+    lottery_risk = 2,
+    smoke = 3,
+    alcohol = 4,
+    gamble = 5,
+    skydiving = 6,
+    drive_limit = 7,
+    cheat = 8, 
+    eat_steak = 9,
+    steak_prepared = 10,
+    gender = 11,
+    age = 12,
+    income = 13,
+    education = 14,
+    location = 15
+  ) %>%
+  filter(eat_steak == 'Yes') %>%
+  subset(select = -eat_steak)
+```
+
+Checking education levels, we can see that most respondents have at least some college background. Only 1 person was listed as having below a high school degree. There are also 5 preparation styles for steak in this dataset.
+```{r}
+as.data.frame(table(steak_df$education))
+as.data.frame(table(steak_df$steak_prepared))
+```
+
+### Using Forcats
+
+We will use `fct_lump_lowfreq` from forcats to group the unknown and less than high school degree respondents together as they represent a small amount of the respondents. `Ggplot` from ggplot2 within tidyverse can  be used to show how these counts compare.
+
+```{r}
+steak_df <- steak_df %>% 
+  mutate(education = fct_lump_min(education, table(steak_df$education)['High school degree'])) 
+steak_df %>%
+  ggplot(aes(y = education)) +
+  geom_bar()
+```
+
+We can then check to see which education and steak style combinations are most common.
+
+```{r}
+steak_df %>% count(steak_prepared) %>% arrange(desc(n))
+steak_df %>% 
+  group_by(education) %>% 
+  count(steak_prepared) %>% 
+  arrange(desc(n))
+```
+
+Medium rare and medium were the most preferred steak preparation styles. This was apparent when counting out each combination as medium rare was the most common order for some college/associate degree, bachelor degree, and graduate degree. This implies that people who go to college prefer medium rare the most. 
+
+### Using Ggplot
+
+This result can be better understood with visualizations from `ggplot`. 
+
+```{r}
+steak_df %>% 
+  group_by(education) %>% 
+  filter(steak_prepared == 'Medium rare') %>%
+  ggplot(aes(y = education)) +
+  stat_count() +
+  labs(title = 'Medium rare steak choosers by education level')
+```
+
+The counts for medium rare look similar to the education distribution of the whole. We should check to make sure the high amount of medium rare selectors that have gone to college is not just because of the population distribution. 
+```{r}
+medium_rare_count <- steak_df %>% 
+  group_by(education) %>% 
+  filter(steak_prepared == 'Medium rare') %>% 
+  count() %>%
+  group_by(education) %>% 
+  summarise(total = sum(n))
+
+education_count <- steak_df %>% 
+  count(education) %>%
+  group_by(education) %>% 
+  summarise(total = sum(n))
+  
+education_count$mr_count = medium_rare_count$total
+
+education_count <- education_count %>%
+  mutate(percentage = mr_count / total) %>%
+  arrange(desc(percentage))
+
+education_count
+
+education_count %>%
+  ggplot(aes(x = percentage, y = education)) +
+  geom_col() + 
+  labs(title = 'Medium rare steak choosers by education level percentage')
+```
+
+These last results are much closer, but also paint a different picture. Among the respondents of this data set, high school graduates were the most likely to select medium rare as their favorite way of having steak. Each group hovered around 35-40% in favor of medium rare. 
+
+### Conclusions
+
+It is common to be able to use multiple tidyverse packages within a workflow. Using dplyr, forcats, and ggplot, we were able to tidy the original steak data using dplyr, reorganized education values using forcats, and plotted education for medium rare steak choosers using ggplot. 
+
+We hoped to answer if education level impacted a person's steak preference. Initially it appeared that medium rare steaks were more popular with those with college experience or a college degree. However, that was because the sample population was skewed toward college. When we accounted for this skew, it turned out that high school graduates had the highest rate of preferring medium rare, closely followed by those with a graduate degree.
