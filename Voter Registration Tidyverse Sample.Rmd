@@ -1,0 +1,45 @@
+---
+title: "Voter Registration Tidyverse Sample"
+author: "Jane Song"
+date: "2025-04-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+```
+
+## Comparing voter registrations by year
+
+Source: https://github.com/fivethirtyeight/data/blob/master/voter-registration/new-voter-registrations.csv
+
+I found a relatively simple dataset to plot using ggplot2
+
+```{r}
+
+voters <- read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/refs/heads/master/voter-registration/new-voter-registrations.csv") 
+
+voters_df <- voters %>%
+  group_by(Jurisdiction, Year) %>%
+  summarize(total_voters = sum(New.registered.voters, na.rm = TRUE)) 
+
+```
+
+## Comparing total registration per state by year 
+
+```{r}
+  ggplot(voters_df, aes(x = Jurisdiction, y = total_voters, fill = factor(Year))) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  labs(
+    title = "Total Voters by State and Year",
+    x = "State",
+    y = "Total Voters",
+    fill = "Year") +
+  theme_minimal()
+```
+

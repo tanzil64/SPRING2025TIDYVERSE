@@ -36,9 +36,13 @@ Revision/Addition Description and Link:
 
 # Jane S.
 
-* Initial Description and Link:
+Initial Description and Link:
+* The voter registration dataset found through an article on fivethirtyeight presents information on new voter registrations in early 2016 and 2020 in 12 jurisdictions of the US.
+* The data file can be found in the following link: https://github.com/fivethirtyeight/data/tree/master/voter-registration
 
-* Revision/Addition Description and Link:
+Revision/Addition Description and Link:
+* The following code shows a comparison of the voter registrations by year in each jurisdiction: 
+* Voter Registration Tidyverse Sample.Rmd
 
 
 
