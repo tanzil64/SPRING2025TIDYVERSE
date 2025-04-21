@@ -1,0 +1,55 @@
+---
+title: "TIDYVERSE PLOTLY"
+author: "Jerald Melukkaran"
+date: "2025-04-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(plotly))
+```
+
+#### Introduction 
+
+In this vignette we observe how plotly can be used to animate plots which can be a great way to visualize changes in a dataset. Here i use it to visualize changes in genres of the top selling games across the years 2000 to 2015. You can either click play to automatically run through the years, or use the slider. 
+
+
+```{r warning=FALSE}
+# Load necessary libraries
+library(plotly)
+library(dplyr)
+
+# Read the data set
+vgsales <- read.csv("https://raw.githubusercontent.com/jerryjerald27/Data-607/refs/heads/main/Tidyverse/vgsales.csv")
+
+# Filter data for years 2000 to present
+vgsales_filtered <- vgsales %>% filter(Year >= 2000 & Year <= 2015)
+
+# Create the animated plot with slower frame duration
+plot_ly(data = vgsales_filtered, 
+        x = ~Global_Sales, 
+        y = ~Genre, 
+        color = ~Genre, 
+        frame = ~Year, 
+        type = 'bar', 
+        orientation = 'h', 
+        marker = list(line = list(width = 10))) %>%
+  layout(
+    xaxis = list(title = 'Global Sales (millions)'),
+    yaxis = list(title = 'Game Genre'),
+    title = 'Top Selling Game Genres (2000 to Present)',
+    updatemenus = list(
+      list(
+        type = 'buttons',
+        showactive = FALSE,
+        buttons = list(
+          list(method = 'animate', args = list(NULL, list(frame = list(duration = 1000, redraw = TRUE), mode = 'immediate')))
+        )
+      )
+    )
+  )
+
+```
+
