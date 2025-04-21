@@ -92,10 +92,12 @@ Revision/Addition Description and Link:
 
 # Sheriann M.
 
-* Initial Description and Link:
+* Initial Description and Link:  
+  Analyzed the Kaggle Resume Dataset using Tidyverse tools. Cleaned text data, created word count summaries, visualized resume lengths with a histogram, and generated a word cloud of the most frequent keywords.  
+  [SheriannMcLarty_Tidyverse_vignette.Rmd](SheriannMcLarty_Tidyverse_vignette.Rmd)
 
 * Revision/Addition Description and Link:
-
+  N/A (Initial submission)
 
 
 # Stefan H.

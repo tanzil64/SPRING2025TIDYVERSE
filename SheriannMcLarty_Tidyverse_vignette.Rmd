@@ -1,0 +1,106 @@
+---
+title: "Tidyverse Vignette: Resume Dataset"
+author: "Sheriann McLarty"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    theme: flatly
+    highlight: tango
+---
+##  Introduction
+
+In this vignette, I worked with a dataset of over 2,400 resumes from Kaggle. The dataset includes plain text resumes along with job categories like HR, Data Science, Engineering, and more. Resumes are a great example of unstructured data — they’re full of text, bullet points, and industry buzzwords, making them messy but meaningful.
+
+I chose this dataset because it's both relevant and personal. As someone who’s been on both sides of the hiring process, I know how important it is to extract clear insights from resumes quickly. In this project, I used several Tidyverse tools — including `dplyr`, `ggplot2`, and `gt` — to clean the data, summarize it, and visualize common patterns in resume content.
+
+By the end, I created a summary table, a histogram of word counts, and a word cloud to highlight the most-used terms. Together, these tools help transform raw resumes into digestible, decision-ready insights.
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(stringr)
+library(gt)
+library(tidytext)
+library(wordcloud)
+library(RColorBrewer)
+```
+
+## Load Data
+
+```{r load_data}
+resumes <- read_csv("resume.csv")
+```
+
+## Clean & Prep
+
+```{r clean_prep}
+resumes_clean <- resumes %>%
+  filter(!is.na(Resume_str)) %>%
+  mutate(
+    Resume = Resume_str,  
+    word_count = str_count(Resume_str, "\\w+")
+  )
+```
+
+
+## Summary Table (with gt)
+
+```{r summary_table}
+resumes_clean %>%
+  summarise(
+    Total_Resumes = n(),
+    Avg_Word_Count = round(mean(word_count), 1),
+    Max_Words = max(word_count),
+    Min_Words = min(word_count)
+  ) %>%
+  gt() %>%
+  tab_header(
+    title = "Resume Word Count Summary"
+  )
+
+```
+"Even simple word count summaries can help recruiters filter resumes faster. This vignette shows how Tidyverse + `gt` can turn unstructured text into clean, decision-ready insights."
+
+
+## Plot: Word Count Distribution
+
+```{r histogram}
+ggplot(resumes_clean, aes(x = word_count)) +
+  geom_histogram(binwidth = 100, fill = "steelblue", color = "white") +
+  labs(title = "Distribution of Resume Word Counts",
+       x = "Word Count",
+       y = "Number of Resumes") +
+  theme_minimal()
+
+```
+
+## Word Cloud of Most Frequent Resume Words
+
+```{r wordcloud, fig.width=10, fig.height=8}
+# Tokenize + clean words
+words <- resumes_clean %>%
+  unnest_tokens(word, Resume) %>%
+  anti_join(stop_words, by = "word") %>%
+  filter(str_length(word) < 15) %>%  # Optional: exclude super long words
+  count(word, sort = TRUE)
+
+# Create the word cloud
+set.seed(123)
+wordcloud(
+  words = words$word,
+  freq = words$n,
+  max.words = 100,
+  colors = brewer.pal(8, "Dark2"),
+  random.order = FALSE
+)
+```
+
+"This word cloud visualizes the top 100 words found across all resumes, highlighting common resume keywords in this dataset."
+
+## Reflection
+
+This vignette demonstrates how the Tidyverse can be used to clean, summarize, and visualize unstructured resume data. Using `gt` and `ggplot2`, I created digestible summaries and a word cloud that highlights common resume terms. These tools are essential in transforming raw data into decision-ready formats for real-world use cases.
+
+
+
