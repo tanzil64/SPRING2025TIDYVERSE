@@ -44,7 +44,8 @@ Revision/Addition Description and Link:
 
 # Jerald M.
 
-* Initial Description and Link:
+* Demonstrates how to animate plots using plotly 
+* Link : jerald_plotly.rmd
 
 * Revision/Addition Description and Link:
 
