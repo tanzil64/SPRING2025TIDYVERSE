@@ -1,0 +1,71 @@
+## Example
+### Daniel DeBonis
+
+```{r}
+library(tidyverse)
+```
+
+In this example, I will be exploring the ggplot2 package from the tidyverse using a data set that I have found on Kaggle that explores the global spice trade. This database is comprised of information taken from the Food and Agriculture Organization between the years 1993 and 2023. I've uploaded the dataset onto Github to be used in this example.
+```{r}
+spices <- read.csv("https://raw.githubusercontent.com/ddebonis47/classwork/refs/heads/main/Export.csv")
+summary(spices)
+```
+
+### ggplot2
+The ggplot2 package is how the tidyverse creates plots and charts based on the organized tabular data. The graph is created by the consolidation of seven elements, some which are specified in each command, and others that have default values and do not need specification. The elements that compose each graph are data, mapping, layers, scale, facets, coordinates, and theme. This example will start basic and incorporate more of these elements as it progresses. 
+
+### Line graph
+Since this data set includes time(year) as a variable, a line graph is the first type of visualization that comes to mind. If our code specifies the country and spice, ggplot will be able to produce a line graph of our data. For instance, let's look at how much ginger was produced in India over the course of our time period.
+```{r}
+indging <- spices |>
+  filter(Area == "India" & Item == "Ginger, raw") #look at data for exact spellings
+indging |>
+  ggplot(mapping = aes(y=Production, x=Year)) +
+  geom_line()
+```
+
+All that was specified to make this graph was the data, which was called first than connected with the pipe operator, the mapping of variables, and the type of graph. The graph can be further customized by using the optional arguments. 
+
+```{r}
+indging |>
+  ggplot(mapping = aes(x=Year, y=Production)) +
+  geom_line() +
+  ggtitle("Indian Ginger Production") + #adds a title to the graph
+  ylab("Production (metric tons)") + #changes the label of an axis
+  theme_minimal() #minimal style has a white background
+```
+
+More arguments will be used in creating different, and usually more complex plots. 
+
+### Scatterplot
+A scatterplot is used when comparing two continuous numerical variables. From this data set, we can compare the consumption and the production of each spice on the country and year level. 
+```{r}
+spices |>
+  ggplot(aes(x=Production, y=Consumption)) +
+  geom_point() # to specify a scatterplot
+```
+
+This scatterplot is not telling us much other than countries that produce a spice tend to also consume it similarly. Maybe this is different for each type of spice. We can specify under the aesthetics that color is used to specify which points relate to which spice.
+```{r}
+spices |>
+  ggplot(aes(x=Production, y=Consumption, color=Item)) +
+  geom_point()  #to specify a scatter plot
+
+```
+
+To balance the scaling, let's focus on just one spice, vanilla.
+```{r}
+vanilla <- spices|>
+  filter(Item == "Vanilla, raw")
+vanilla |>
+  ggplot(aes(x=Production, y=Consumption))+
+  geom_point()
+```
+
+This distribution makes sense since Vanilla cannot be produced in many countries, yet is used in many types of cuisine. Now we can use a facet wrap to see if this relationship was consistent across the time period.
+```{r}
+vanilla |>
+  ggplot(aes(x=Production, y=Consumption))+
+  geom_point()+
+  facet_wrap(~Year)#produces a plot for each year
+```
