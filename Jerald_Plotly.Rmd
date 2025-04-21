@@ -17,17 +17,15 @@ In this vignette we observe how plotly can be used to animate plots which can be
 
 
 ```{r warning=FALSE}
-# Load necessary libraries
+
 library(plotly)
 library(dplyr)
 
-# Read the data set
+
 vgsales <- read.csv("https://raw.githubusercontent.com/jerryjerald27/Data-607/refs/heads/main/Tidyverse/vgsales.csv")
 
-# Filter data for years 2000 to present
 vgsales_filtered <- vgsales %>% filter(Year >= 2000 & Year <= 2015)
 
-# Create the animated plot with slower frame duration
 plot_ly(data = vgsales_filtered, 
         x = ~Global_Sales, 
         y = ~Genre, 
