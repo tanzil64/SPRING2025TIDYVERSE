@@ -1,0 +1,254 @@
+---
+title: "Tanzil_MP tidyverse extend"
+author: "Md. Tanzil Ehsan"
+date: "04/27/25"
+output: openintro::lab_report
+---
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+```
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+
+##Introduction
+
+In this vignette, we will use lubridate package from the Tidyverse to parse and manipulate data that uses date and time. The data we will use is flights dataset in nycflights13 package. We will calculate departure delays and visualize the results. 
+
+###Load Data and Perform Analysis
+
+First, lets install and load the necessary libraries. 
+
+```{r}
+if (!requireNamespace("tidyverse", quietly = TRUE)) {install.packages("tidyverse")}
+if (!requireNamespace("lubridate", quietly = TRUE)) {install.packages("lubridate")}
+
+# Install nycflights13 if not already installed
+if (!requireNamespace("nycflights13", quietly = TRUE)) {
+  install.packages("nycflights13")
+}
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(nycflights13)
+library(dplyr)
+library(lubridate)
+library(stringr)
+```
+
+Let's load the flight dataset and get a glimpse of the dataset. 
+
+```{r}
+flights <- nycflights13::flights
+glimpse(flights)
+```
+
+After the glimpse of the dataset, we will use functions in the lubridate package to convert date and time columns into proper datetime objects.
+
+
+## Step 1: Preprocess Arrival Times
+
+```{r}
+flights <- flights %>%
+  mutate(
+    flight_date = make_date(year, month, day),
+    # Pad and clean arr_time and sched_arr_time
+    arr_time = str_pad(arr_time, 4, pad = "0"),
+    sched_arr_time = str_pad(sched_arr_time, 4, pad = "0"),
+    # Replace "2400" with "0000" for valid parsing
+    arr_time = if_else(arr_time == "2400", "0000", arr_time),
+    sched_arr_time = if_else(sched_arr_time == "2400", "0000", sched_arr_time),
+    # Parse to time objects
+    actual_arrival_time = parse_time(as.character(arr_time), format = "%H%M"),
+    sched_arrival_time = parse_time(as.character(sched_arr_time), format = "%H%M"),
+    # Convert arr_delay to numeric (redundant but for consistency)
+    arrival_delay_minutes = as.numeric(arr_delay)
+  )
+```
+
+
+
+With this,  The date is combined into one column and the times are combined into one column for easier readability and analysis. 
+```{r}
+#check the new dataset
+
+glimpse(flights)
+
+```
+
+
+
+Next, we will convert the departure delay values into a numeric format for easier analysis. Then we will summarize the average departure delay for each day of the week and create a visualization to present the findings. 
+
+We will use wday function from the lubridate package to figure out what day of the week the date of departure fell on. 
+
+```{r}
+#Calculate delay in minutes
+flights <- flights %>%
+  mutate(departure_delay_minutes = as.numeric(dep_delay))
+
+#Add a day of the week column
+flights <- flights %>%
+  mutate(day_of_week = wday(flight_date, label = TRUE))
+```
+
+
+## Analyze Delays by Carrier and Day of the Week
+
+```{r}
+#Summarize average delay by day of the week 
+average_delay <- flights %>%
+  group_by(day_of_week) %>%
+  summarize(average_delay = mean(departure_delay_minutes, na.rm = TRUE))
+
+#Plot the results
+ggplot(average_delay, aes(x = day_of_week, y = average_delay)) +
+  geom_bar(stat = "identity",fill ='orange') +
+  labs(
+    title = "Average Departure Delay by Day of the Week",
+    x = "Day of the Week",
+    y = "Average Departure Delay (minutes)"
+  )
+
+```
+
+```{r}
+ggplot(average_delay, aes(x = reorder(day_of_week, average_delay), y = average_delay)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_text(aes(label = round(average_delay, 1)), vjust = -0.5) +
+  labs(
+    title = "Average Departure Delay by Day of the Week",
+    x = "Day of the Week",
+    y = "Average Departure Delay (minutes)"
+  ) +
+  theme_minimal()
+```
+## Explore Delay Distribution by Origin Airport
+
+```{r}
+# Check for non-finite values -finite values
+flights %>%
+  summarise(
+    na_count = sum(is.na(departure_delay_minutes)),
+    nan_count = sum(is.nan(departure_delay_minutes)),
+    inf_count = sum(is.infinite(departure_delay_minutes))
+  )
+
+# Check range of departure_delay_minutes
+summary(flights$departure_delay_minutes)
+
+# Count rows outside y-limit
+flights %>%
+  summarise(
+    below_limit = sum(departure_delay_minutes < -20, na.rm = TRUE),
+    above_limit = sum(departure_delay_minutes > 100, na.rm = TRUE)
+  )
+```
+```{r}
+library(tidyverse)
+
+# Boxplot of departure delays by origin airport, excluding non-finite values
+ggplot(flights %>% filter(!is.na(departure_delay_minutes) & is.finite(departure_delay_minutes)), 
+       aes(x = origin, y = departure_delay_minutes)) +
+  geom_boxplot(fill = "lightgreen", outlier.color = "red") +
+  labs(
+    title = "Distribution of Departure Delays by Origin Airport",
+    subtitle = "Excludes 8,255 flights with missing or invalid delay data",
+    x = "Origin Airport",
+    y = "Departure Delay (minutes)"
+  ) +
+  theme_minimal() +
+  coord_cartesian(ylim = c(-20, 100)) # Limit y-axis to focus on typical delays
+```
+
+
+```{r}
+# Check unique hour values in flights
+unique(flights$hour)
+```
+## Investigate Hourly Delay Patterns
+```{r}
+
+# Clean the hour column in flights
+flights <- flights %>%
+  mutate(hour = if_else(hour == 24, 0, hour))
+
+# Summarize average departure delay by hour
+hourly_delay <- flights %>%
+  group_by(hour) %>%
+  summarise(
+    avg_dep_delay = mean(departure_delay_minutes, na.rm = TRUE),
+    n_flights = n(),
+    .groups = "drop"
+  ) %>%
+  # Remove any rows with NA or invalid values
+  filter(!is.na(hour) & !is.na(avg_dep_delay) & is.finite(avg_dep_delay))
+
+# Line plot of average delay by hour
+ggplot(hourly_delay, aes(x = hour, y = avg_dep_delay)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  labs(
+    title = "Average Departure Delay by Scheduled Departure Hour",
+    x = "Hour of Day",
+    y = "Average Departure Delay (minutes)"
+  ) +
+  theme_minimal()
+```
+
+## To compare departure and arrival delays
+```{r}
+# Pivot departure and arrival delays into a long format
+delay_types <- flights %>%
+  select(day_of_week, departure_delay_minutes, arrival_delay_minutes ) %>%
+  pivot_longer(
+    cols = c(departure_delay_minutes, arrival_delay_minutes ),
+    names_to = "delay_type",
+    values_to = "delay_minutes"
+  )
+
+# Summarize average delays by day of the week and delay type
+delay_types_summary <- delay_types %>%
+  group_by(day_of_week, delay_type) %>%
+  summarise(
+    avg_delay = mean(delay_minutes, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+```{r}
+delay_types 
+
+```
+
+```{r}
+# Grouped bar plot for departure vs. arrival delays
+ggplot(delay_types_summary, aes(x = day_of_week, y = avg_delay, fill = delay_type)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Average Departure vs. Arrival Delays by Day of the Week",
+    x = "Day of the Week",
+    y = "Average Delay (minutes)",
+    fill = "Delay Type"
+  ) +
+  scale_fill_manual(values = c("departure_delay_minutes" = "orange", "arrival_delay_minutes" = "purple")) +
+  theme_minimal()
+```
+
+
+##Conclusion In this analysis, we demonstrated how the Tidyverse, particularly the lubridate, dplyr, and ggplot2 packages, can be used to efficiently manipulate, clean, and visualize flight delay data.
+By transforming raw date and time information into structured formats, we were able to explore patterns in both departure and arrival delays across different days of the week, airports, and hours of the day.
+Using visualizations like bar charts, boxplots, and line graphs, we uncovered meaningful trends — for example, average delays fluctuating by weekday and departure hour.
+
+This workflow highlights the power of tidy data principles: with a consistent and organized dataset, we can gain valuable insights quickly and clearly.
+The tools and techniques used here can be easily extended to other real-world datasets involving dates, times, and delay analysis.
+
